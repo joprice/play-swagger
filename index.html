@@ -58,6 +58,8 @@
 <h2>
 <a id="day-to-day-usage" class="anchor" href="#day-to-day-usage" aria-hidden="true"><span class="octicon octicon-link"></span></a>Day-to-day usage</h2>
 
+<p>For installation/get-started see the next section. </p>
+
 <h4>
 <a id="a-simple-example" class="anchor" href="#a-simple-example" aria-hidden="true"><span class="octicon octicon-link"></span></a>A simple example</h4>
 
@@ -66,7 +68,9 @@
 <pre><code>-&gt;  /api/cards    cards.Routes
 </code></pre>
 
-<p>You write the following swagger spec in comment. This example is in yml, you can write json if you prefer</p>
+<p>You can write the following swagger spec in comment (This example is in yml, but json is also supported). The comment has to start and end with <code>###</code> 
+If you don't write any comment here the endpoint is still going to be picked up by play-swagger, the parameters will be included but there will not be any response format. 
+This allows newly added endpoints to be automatically included in swagger with some basic information.      </p>
 
 <pre><code> ###
  #  summary: create a card 
@@ -90,8 +94,11 @@
   <span class="pl-k">case</span> <span class="pl-k">class</span> <span class="pl-en">Card</span>(<span class="pl-v">id</span>: <span class="pl-k">Int</span>, <span class="pl-v">name</span>: <span class="pl-k">String</span>)
 }</pre></div>
 
-<p>This will generate the path with summary, tags, parameters and a response with schema defined. It also recursively generates definitions from your case class.<br>
-This works fine if you using a simple <code>Json.format[CardCreated]</code> to generate the json response out of this class. If not, you will have to write the definition yourself in the base swagger spec and reference it here at the endpoint. </p>
+<p>This will generate the path with summary, tags, parameters and a response with schema defined, which comes from the comments and case class reflection. 
+It also recursively generates definitions from your case class.<br>
+These schemas assumes that you are using a simple <code>Json.format[CardCreated]</code> to generate the json response out of this class.
+If not, you will have to write the definition yourself in the base swagger spec and reference it here at the endpoint 
+(give it a different name than the full package name though, play-swagger will try to generate definitions for any $ref that starts with the domain package name). </p>
 
 <p>The result swagger specs will look like:
   <img src="http://amp-public-share.s3-website-us-east-1.amazonaws.com/shifu/play-swagger-sample.png" alt=""></p>
@@ -112,7 +119,7 @@ GET   /docs/swagger-ui/*file        controllers.Assets.at(path:String="/public/l
 </code></pre>
 
 <h4>
-<a id="how-to-specify-body-content-in-a-post" class="anchor" href="#how-to-specify-body-content-in-a-post" aria-hidden="true"><span class="octicon octicon-link"></span></a>How to specify body content in a post</h4>
+<a id="how-to-specify-body-content-in-a-post-endpoint" class="anchor" href="#how-to-specify-body-content-in-a-post-endpoint" aria-hidden="true"><span class="octicon octicon-link"></span></a>How to specify body content in a POST endpoint</h4>
 
 <p>Body content is specified as a special parameter in swagger. So you need to create a parameter in your swagger spec comment as "body", for example</p>
 
@@ -136,7 +143,7 @@ POST   /tracks       controller.Api.createTrack()
 <h1></h1>
 
 <h2>
-<a id="installation" class="anchor" href="#installation" aria-hidden="true"><span class="octicon octicon-link"></span></a>Installation</h2>
+<a id="get-started" class="anchor" href="#get-started" aria-hidden="true"><span class="octicon octicon-link"></span></a>Get Started</h2>
 
 <p>In short you need to create a controller that uses the library to generate the swagger spec and make it available as an endpoint.
 Then you just need to have a swagger UI instance to consumer that swagger spec. </p>
@@ -148,12 +155,15 @@ Then you just need to have a swagger UI instance to consumer that swagger spec. 
 
 <div class="highlight highlight-source-scala"><pre>resolvers <span class="pl-k">+</span><span class="pl-k">=</span> <span class="pl-en">Resolver</span>.jcenterRepo
 
-libraryDependencies <span class="pl-k">+</span><span class="pl-k">=</span>  <span class="pl-s"><span class="pl-pds">"</span>com.iheart<span class="pl-pds">"</span></span> <span class="pl-k">%%</span> <span class="pl-s"><span class="pl-pds">"</span>play-swagger<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>0.1.1-RELEASE<span class="pl-pds">"</span></span></pre></div>
+libraryDependencies <span class="pl-k">+</span><span class="pl-k">=</span>  <span class="pl-s"><span class="pl-pds">"</span>com.iheart<span class="pl-pds">"</span></span> <span class="pl-k">%%</span> <span class="pl-s"><span class="pl-pds">"</span>play-swagger<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>0.1.2-RELEASE<span class="pl-pds">"</span></span></pre></div>
 
 <h4>
 <a id="step-2" class="anchor" href="#step-2" aria-hidden="true"><span class="octicon octicon-link"></span></a>Step 2</h4>
 
-<p>add a controller to your Play app that serves the swagger spec</p>
+<p>Play swagger is just a library that generates a swagger spec json for you.
+You can do anything you want with that json object (e.g. save it to a file), but the most common usage would be serving it in an endpoint in your play app.
+Here is how: 
+Add a controller to your Play app that serves the swagger spec</p>
 
 <div class="highlight highlight-source-scala"><pre>
 <span class="pl-k">class</span> <span class="pl-en">ApiSpecs</span> <span class="pl-k">@</span><span class="pl-en">Inject</span>() (<span class="pl-v">router</span>: <span class="pl-en">Router</span>, <span class="pl-v">cached</span>: <span class="pl-en">Cached</span>) <span class="pl-k">extends</span> <span class="pl-e">Controller</span> {
@@ -164,7 +174,7 @@ libraryDependencies <span class="pl-k">+</span><span class="pl-k">=</span>  <spa
   <span class="pl-k">val</span> <span class="pl-en">domainPackage</span> <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>YOUR.DOMAIN.PACKAGE<span class="pl-pds">"</span></span>  
   <span class="pl-k">private</span> <span class="pl-k">lazy</span> <span class="pl-k">val</span> <span class="pl-en">generator</span> <span class="pl-k">=</span> <span class="pl-en">SwaggerSpecGenerator</span>(domainPackage)   
 
-  <span class="pl-k">def</span> <span class="pl-en">specs</span> <span class="pl-k">=</span> cached(<span class="pl-s"><span class="pl-pds">"</span>swaggerDef<span class="pl-pds">"</span></span>) {
+  <span class="pl-k">def</span> <span class="pl-en">specs</span> <span class="pl-k">=</span> cached(<span class="pl-s"><span class="pl-pds">"</span>swaggerDef<span class="pl-pds">"</span></span>) {  <span class="pl-c">//it would be beneficial to cache this endpoint as we do here, but it's not required if you don't expect much traffic.   </span>
     <span class="pl-en">Action</span> { _ <span class="pl-k">⇒</span>
       <span class="pl-en">Ok</span>(generator.generate(router.documentation))
     }
@@ -229,6 +239,15 @@ GET   /docs/swagger-ui/*file        controllers.Assets.at(path:String="/public/l
 
 <p>Then you should be able to open the swagger ui at
 http://localhost:9000/docs/swagger-ui/index.html?url=/docs/swagger.json</p>
+
+<h1></h1>
+
+<h2>
+<a id="how-to-contribute" class="anchor" href="#how-to-contribute" aria-hidden="true"><span class="octicon octicon-link"></span></a>How to contribute</h2>
+
+<p>If you have any questions/bug reports, please submit an issue on github. 
+With good unit tests coverage, it's pretty easy to add/modify this library as well. 
+Code contribution are more than welcome. Make sure that your code is tested and submit the pull request!    </p>
       </section>
       <footer>
         <p><small>Hosted on <a href="https://pages.github.com">GitHub Pages</a> using the Dinky theme</small></p>
